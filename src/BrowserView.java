@@ -2,6 +2,7 @@ import java.awt.Dimension;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
+
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker;
@@ -23,7 +24,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
+
 import javax.imageio.ImageIO;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -61,6 +64,8 @@ public class BrowserView {
     private Button myBackButton;
     private Button myNextButton;
     private Button myHomeButton;
+    private Button myFavorite;
+    
     // favorites
     private ComboBox<String> myFavorites;
     // get strings from resource file
@@ -84,19 +89,19 @@ public class BrowserView {
         enableButtons();
         // create scene to hold UI
         myScene = new Scene(root, DEFAULT_SIZE.width, DEFAULT_SIZE.height);
-        //myScene.getStylesheets().add(DEFAULT_RESOURCE_PACKAGE + STYLESHEET);
+        myScene.getStylesheets().add(DEFAULT_RESOURCE_PACKAGE + STYLESHEET);
     }
 
     /**
      * Display given URL.
      */
     public void showPage (String url) {
-        URL valid = myModel.go(url);
-        if (valid != null) {
+        try{ 
+        	URL valid = myModel.go(url);
             update(valid);
         }
-        else {
-            showError("Could not load " + url);
+        catch(Exception e) {
+            showError(e.getMessage());
         }
     }
 
@@ -142,6 +147,7 @@ public class BrowserView {
     // change page to favorite choice
     private void showFavorite (String favorite) {
         showPage(myModel.getFavorite(favorite).toString());
+        System.out.println(favorite);
         // reset favorites ComboBox so the same choice can be made again
         myFavorites.setValue(null);
     }
@@ -201,6 +207,10 @@ public class BrowserView {
         HBox result = new HBox();
         // create buttons, with their associated actions
         // old style way to do set up callback (anonymous class)
+        myFavorite = makeButton("AddFavoriteCommand", event -> addFavorite());
+        
+        result.getChildren().add(myFavorite);
+        //myAddfavorite = makeButton("FavoriteFirstItem", event ->Favorite());
         myBackButton = makeButton("BackCommand", new EventHandler<ActionEvent>() {
             @Override      
             public void handle (ActionEvent event) {       
@@ -225,7 +235,11 @@ public class BrowserView {
     private Node makePreferencesPanel () {
         HBox result = new HBox();
         myFavorites = new ComboBox<String>();
-        // ADD REST OF CODE HERE
+        myFavorites.setOnMouseClicked(e->{
+        if(myFavorites.getValue() != null){
+        	showFavorite(myFavorites.getValue());
+        }});
+        result.getChildren().add(myFavorites);
         result.getChildren().add(makeButton("SetHomeCommand", event -> {
             myModel.setHome();
             enableButtons();
